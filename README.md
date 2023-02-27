@@ -1,9 +1,3 @@
-<!--
- * @Author: muqing
- * @Date: 2023-02-24 18:12:56
- * @LastEditTime: 2023-02-27 10:19:59
- * @Description: 
--->
 
 ## 寻宝猎人
 
@@ -15,7 +9,15 @@
 
 * 游戏图片
 
+![WoYcUPHuQz](https://user-images.githubusercontent.com/33119203/221457362-05e0050a-aa8a-413c-8ce9-8d94569144d6.jpg)
+![image](https://user-images.githubusercontent.com/33119203/221457387-b030c2a4-f16c-46d4-8ef1-18bfb548a4e7.png)
+![image](https://user-images.githubusercontent.com/33119203/221457488-99ad779e-3e4c-477b-850d-98c54bb5b516.png)
 
+## 技术栈
+
+* vue3
+* typescript
+* pixi.js@7.1
 
 
 ## 启动步骤
