@@ -9,7 +9,7 @@ pixi.js@7.1
 
  */
 import { defineComponent, onMounted, ref, reactive } from "vue";
-import { Application, Assets, Sprite, Text, TextStyle, Container, Graphics } from 'pixi.js';
+import { Application, Assets, Sprite, Text, TextStyle, Container, Graphics,Texture} from 'pixi.js';
 
 
 export default defineComponent({
@@ -22,6 +22,7 @@ export default defineComponent({
         let gameScene: Container;
         let gameOverScene: any;  // 游戏结束容器
         let healthBar: any;  // 生命条
+        let gameRun:any
 
         // 游戏需要的精灵
         const sprites: { [key: string]: Sprite } = {};
@@ -33,6 +34,7 @@ export default defineComponent({
             width: 488,
             height: 480,
         };
+        const blood = 128;// 血条宽度
 
         let blobHeight = 0; // 一只怪物的高度
         let blobs: any = ref([])
@@ -46,7 +48,7 @@ export default defineComponent({
          * @param {*} max
          * @return {*}
          */
-        const randomInt = (min, max) => {
+        const randomInt = (min:number, max:number):number => {
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
@@ -55,7 +57,7 @@ export default defineComponent({
          * @return {*}
          */
         const initGame =async () => {
-            await Assets.load('treasureHunter.json').then(res => {
+            await Assets.load('/src/assets/treasureHunter.json').then(res => {
                 Object.keys(res.textures).forEach(key => {
                     const sprite = new Sprite(res.textures[key]);
                     // sprite.zIndex = 2;
@@ -80,7 +82,7 @@ export default defineComponent({
             let spacing = 48, xOffset = 100;
             for (let i = 0; i < numberOfBlobs; i++) {
                 // const blob = new Sprite(res.textures['blob.png']);
-                const blob: any = Sprite.from('blob.png');
+                const blob: any = Sprite.from('/src/assets/blob.png');
                 let y = randomInt(gameContainer.y, app.stage.height - blobHeight - gameContainer.y);
                 blob.x = spacing * i + xOffset;;
                 blob.y = y;
@@ -99,46 +101,16 @@ export default defineComponent({
             // 创建生命条背景矩形
             const innerBar = new Graphics();
             innerBar.beginFill(0x000000);
-            innerBar.drawRoundedRect(0, 0, 128, 8, 3);
+            innerBar.drawRoundedRect(0, 0, blood, 8, 0);
             innerBar.endFill();
             healthBar.addChild(innerBar);
             // 创建生命条血条
             const outerBar = new Graphics();
             outerBar.beginFill(0xff3300);
-            outerBar.drawRoundedRect(0, 0, 128, 8, 3);
+            outerBar.drawRoundedRect(0, 0, blood, 8, 0);
             outerBar.endFill();
             healthBar.addChild(outerBar);
             healthBar.outer = outerBar; // 将血条添加到容器上，方便操作
-
-            // 初始化游戏结束场景
-            gameOverScene = new Container(); // 游戏结束场景容器
-            gameOverScene.position.set(30, 250);
-            gameScene.addChild(gameOverScene);
-
-            const tipStyle: TextStyle = new TextStyle({
-                fontFamily: "Futura",
-                fontSize: 64,
-                fill: "white",
-            });
-            tip = new Text("The End!", tipStyle);
-            tip.x = 60;
-            // tip.y = app.stage.height / 2 - 32;
-            gameOverScene.visible = false; // 在游戏开始时，gameOverScene不应该被显示出来
-            gameOverScene.addChild(tip);
-
-
-            // const restart = new Graphics();
-            // restart.beginFill(0xff3300);
-            // restart.drawRoundedRect(0, 0, 40, 30, 3);
-            // restart.endFill();
-            // restart.position.set(120,0)
-            // restart.zIndex=3
-            // gameScene.addChild(restart);
-
-            // restart.on('click',()=>{
-            //     console.log('lalalal');
-
-            // })
 
         }
 
@@ -147,8 +119,8 @@ export default defineComponent({
          * @return {*}
          */
         const gameEnd = () => {
-            // gameScene.visible = false;
-            // app.renderer.background = 0x000000;
+            gameScene.visible = false;
+            // app!.renderer!.background = 0x000000;
             gameOverScene.visible = true;
         }
 
@@ -158,7 +130,7 @@ export default defineComponent({
          * @param {*} container
          * @return {*}
          */
-        const boundary = (sprite, container) => {
+        const boundary = (sprite:Sprite, container:Container) => {
 
             let bound = ""; // 定义精灵抵达的边
             // 精灵抵达左边界
@@ -189,7 +161,6 @@ export default defineComponent({
         const initEvent = () => {
 
             document.addEventListener('keydown', (e) => {
-                // console.log('keydown', e);
                 keyState.set(e.code, true);
                 e.preventDefault();
             });
@@ -241,7 +212,21 @@ export default defineComponent({
             return hit;
         }
 
-        const loop = (delta) => {
+        const loop = (delta:number) => {
+            // if(healthBar.outer.width < 0) {
+            //     gameScene.visible = false;
+            //     gameOverScene.visible = true;
+            //     return 
+            //   }
+
+            if (keyState.get('Enter')&&!gameScene.visible) {
+                if(healthBar.outer.width > 0) {
+                    gameRun.visible = false;
+                    gameScene.visible = true;
+                    return
+                }
+            }
+
             let moveSpeed = randomInt(1, 3);
             blobs.value.map(blob => {
                 blob.y += moveSpeed
@@ -271,9 +256,10 @@ export default defineComponent({
                     gameEnd(); // 游戏结束
                     tip.text = "You Lose!"; // 修改提示文案
                     healthBar.outer.width = 0; // 让血条停在0
-                    setTimeout(() => {
-                        app.ticker.stop(); // 1秒后停止运行游戏
-                    }, 500);
+
+                    // setTimeout(() => {
+                    //     app.ticker.stop(); // 1秒后停止运行游戏
+                    // }, 500);
                 }
 
                 // 判断探索者是否已经接触到宝盒
@@ -290,9 +276,9 @@ export default defineComponent({
                 if (isOut&&isTouch) {
                     gameEnd();
                     tip.text = "You Win!!!";
-                    setTimeout(() => {
-                        app.ticker.stop(); // 1秒后停止运行游戏
-                    }, 500);
+                    // setTimeout(() => {
+                    //     app.ticker.stop(); // 1秒后停止运行游戏
+                    // }, 500);
                 }
 
             })
@@ -342,14 +328,102 @@ export default defineComponent({
             gameScene.sortableChildren = true;
 
             app.stage.addChild(gameScene);
+
+            gameRun = new Container();
+            gameRun.visible = false;
+            gameRun.width =  window.innerWidth
+            gameRun.height = window.innerHeight
+            app.stage.addChild(gameRun);
+
+            const tipStyle: TextStyle = new TextStyle({
+                fontFamily: "Futura",
+                fontSize: 64,
+                fill: "white",
+            });
+
+            const run = new Text('按下 Enter 開始遊戲',{
+                fontFamily: "Futura",
+                fontSize: 30,
+                fill: "white",
+            });
+            run.x = 120;
+            run.y = 150;
+            gameRun.addChild(run);
+
+            // const gameOver = new Container();
+            // gameOver.visible = false;
+            // app.stage.addChild(gameOver);
+
+            // const over = new Text('Game Over',tipStyle);
+            // over.x = 250;
+            // over.y = 250;
+            // gameOver.addChild(over);
+
+              // 初始化游戏结束场景
+              gameOverScene = new Container(); // 游戏结束场景容器
+              gameOverScene.position.set(30, 250);
+              app.stage.addChild(gameOverScene);
+  
+              tip = new Text("The End!", tipStyle);
+              tip.x = 60;
+              // tip.y = app.stage.height / 2 - 32;
+              gameOverScene.visible = false; // 在游戏开始时，gameOverScene不应该被显示出来
+              gameOverScene.addChild(tip);
+
+            //   gameScene.visible = false
+
+
+                // 重新開始按鈕繪畫
+                const resetBtn = new Container();
+                gameOverScene.addChild(resetBtn);
+            
+                let gameGraphics = new Graphics();
+                gameGraphics.beginFill(0x33BBFF);
+                gameGraphics.drawRoundedRect(0, 0, 120, 50, 25);
+                gameGraphics.endFill();
+                gameGraphics.x = 100;
+                gameGraphics.y = 160;
+                resetBtn.addChild(gameGraphics);
+                resetBtn.zIndex = 5
+            
+                const resetText = new Text('重新開始', {  // 改用變數傳入
+                    fontFamily: 'Microsoft JhengHei',
+                    fontSize: 16,
+                    fill: [0xFFFFFF],
+                    align: 'center'
+                });
+                resetText.x = 120;
+                resetText.y = 170;
+                resetBtn.addChild(resetText);
+                // 設置互動
+                resetBtn.interactive = true;
+                // resetBtn.buttonMode = true;
+                
+                resetBtn.on('click',gameReset); 
+
         }
+
+        const gameReset = ()=>{            
+            // 宝箱和人回到初始位置
+            sprites['explorer.png'].position.set(60, 100);
+            let x = randomInt(gameContainer.x, 480)
+            let y = randomInt(200, 470)
+            sprites['treasure.png'].position.set(x, y)
+            // 血条恢复
+            healthBar.outer.width = blood
+
+            gameRun.visible = true;
+            gameScene.visible = false;
+            gameOverScene.visible = false;
+        }
+          
 
         onMounted(async () => {
             await init()
             await initGame()
             initEvent();
             // loop()
-            app.ticker.add(loop);
+            app.ticker.add(loop);            
         })
 
         return {}
