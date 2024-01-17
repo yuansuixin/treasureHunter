@@ -75,6 +75,11 @@ export default defineComponent({
                 let x = randomInt(gameContainer.x, 480)
                 let y = randomInt(200, 470)
                 sprites['treasure.png'].position.set(x, y)
+
+                // 将背景设置为750
+                // console.log('999', sprites['dungeon.png'].width);
+                // sprites['dungeon.png'].width = 750
+                // sprites['dungeon.png'].height = 750
             });
 
 
@@ -111,7 +116,6 @@ export default defineComponent({
             outerBar.endFill();
             healthBar.addChild(outerBar);
             healthBar.outer = outerBar; // 将血条添加到容器上，方便操作
-
         }
 
         /**
@@ -303,11 +307,16 @@ export default defineComponent({
             }
         }
 
+        const w =window.innerWidth,   // 或者  window.innerWidth
+        h = window.innerHeight;  // 或者  window.innerHeight document.body.clientHeight
 
         const init = async () => {
+           
             app = new Application({
-                width: window.innerWidth,
-                height: window.innerHeight,
+                // width: window.innerWidth,
+                // height: window.innerHeight,
+                width: w,
+                height: h,
                 antialias: true,
                 // resolution: window.devicePixelRatio,       // default: 1      分辨率
                 // forceCanvas: true,
@@ -422,6 +431,22 @@ export default defineComponent({
             await init()
             await initGame()
             initEvent();
+
+
+            let min = (w<h)?w:h;
+            let scale = min/750;  // 根据设计稿尺寸进行缩放比例调整
+            console.log(w,h,min,"放大系数：",scale);
+                    
+             app.stage.scale.set(scale,scale);  // 根据屏幕实际宽高放大舞台
+             // 横屏
+            if (w>h) {   // 根据横屏竖屏效果旋转舞台
+                console.log(444444);
+                app.stage.rotation = 1.57;
+                app.stage.pivot.set(0.5);
+                app.stage.x = w;
+            }
+
+
             // loop()
             app.ticker.add(loop);            
         })
